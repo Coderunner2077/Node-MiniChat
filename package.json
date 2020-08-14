@@ -2,7 +2,9 @@
 	"name": "Superchat",
 	"version": "0.1.0",
 	"dependencies": {
-		"socket.io": "~2.3.0"
+		"socket.io": "~2.3.0",
+		"ent": "~2.2.0",
+		"express": "~4.17.1"
 	},
 	"author": "Tyran Reacts s.mossa1990@gmail.com",
 	"description": "Very basic chat using Node.js and socket.io"
