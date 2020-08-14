@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<title>Superchat</title>
+		<style>
+			#message {
+				margin-right: 10px;
+			}
+
+			.chat {
+				font-size: 1.2em;
+				margin: 15px 10px;
+			}
+
+			.pseudo {
+				background-color: black;
+				color: white;
+				padding: 5px 8px;
+				margin-right: 6px;
+				font-weight: bold;
+
+			}
+
+			.log {
+				font-style: italic;
+				margin: 10px 20px;
+			}
+
+			#online {
+				font-size: 1.2em;
+				background-color: #ccc;
+				padding: 5px;
+				margin: 5px 0px;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Le super Chat temps réel !</h1>
+		<div id="online">
+			<div id="total"></div>
+			<p id="names"></p>
+		</div>
+		<form id="myForm">
+			<input type="text" id="message" name="message" placeholder="Votre message" 
+				value="" />
+			<input type="submit" value="Envoyer" />
+		</form>
+		<div id="chat"></div>
+			
+		</div>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			const writeChat = (pseudo, message) => {
+				let div = document.getElementById('chat');
+				div.innerHTML += `<p class="chat"><span class="pseudo">
+					${pseudo}</span>${message}</p>`;
+			}
+
+			const writeLog = (message) => {
+				document.querySelector('#chat').innerHTML += `<p class="log">
+					${message}</p>`;
+			}
+
+			const updateOnline = (online, names) => {
+				document.querySelector('#total').innerHTML = 'Online: ' + online;
+				document.querySelector('#names').innerHTML = names.join(', ');
+			}
+
+			const socket = io.connect('http://localhost:8080');
+
+			var pseudo = '';
+			setTimeout(() => {
+				pseudo = prompt('Entrez votre pseudo');
+				socket.emit('pseudo_entry', pseudo);
+			}, 500);
+
+			const myForm = document.querySelector('#myForm');
+			myForm.addEventListener('submit', e => {
+				e.preventDefault();
+				let message = document.querySelector('#message');
+				if(message.value === '' || pseudo === '') return;
+				socket.emit('message', message.value);
+				message.value = '';
+			})
+
+			socket.on('welcome', ({pseudo, online, names}) => {
+				updateOnline(online, names);
+				writeLog('Bienvenue ' + pseudo + ' !');
+			})
+
+			socket.on('enters_chat', ({pseudo, online, names}) => {
+				updateOnline(online, names);
+				writeLog(pseudo + ' a rejoint le Chat !');
+			});
+
+			socket.on('message', ({message, pseudo}) => {
+				writeChat(pseudo, message);
+			});
+
+			socket.on('leaves_chat', ({pseudo, online, names}) => {
+				updateOnline(online, names);
+				writeLog(pseudo + ' a quitté le Chat !')
+			});
+		</script>
+	</body>
+</html>

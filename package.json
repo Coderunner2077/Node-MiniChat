@@ -1,0 +1,9 @@
+{
+	"name": "Superchat",
+	"version": "0.1.0",
+	"dependencies": {
+		"socket.io": "~2.3.0"
+	},
+	"author": "Tyran Reacts s.mossa1990@gmail.com",
+	"description": "Very basic chat using Node.js and socket.io"
+}
