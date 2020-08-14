@@ -1,14 +1,14 @@
-const http = require('http');
-const fs = require('fs');
+const app = require('express')();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+const ent = require('ent');
+const encode = require('ent/encode');
 
-const server = http.createServer((req, res) => {
-	fs.readFile('./index.html', 'utf-8', (error, content) => {
-		res.writeHead(200, {'Content-type': 'text/html'});
-		res.end(content);
-	})
-});
+app.set('view engine', 'ejs');
 
-const io = require('socket.io').listen(server);
+app.get(/\w*/, (req, res) => {
+	res.render('index.ejs');
+})
 
 const clients = [];
 
@@ -16,13 +16,15 @@ io.sockets.on('connection', socket => {
 	clients.push(socket);
 
 	socket.on('pseudo_entry', pseudo => {
-		socket.pseudo = pseudo;
+		socket.pseudo = pseudo = encode(pseudo);
 		let names = clients.map(client => client.pseudo);
 		socket.emit('welcome', {pseudo: pseudo, online: clients.length, names: names});
 		socket.broadcast.emit('enters_chat', {pseudo: pseudo, online: clients.length, names: names});
+		console.log(pseudo);
 	});
 
 	socket.on('message', message => {
+		message = encode(message);
 		socket.emit('message', {message: message, pseudo: socket.pseudo});
 		socket.broadcast.emit('message', {message: message, pseudo: socket.pseudo});
 	});
@@ -36,4 +38,6 @@ io.sockets.on('connection', socket => {
 	});
 })
 
-server.listen(8080);
+http.listen(8080, () => {
+	console.log('Listening on *:8080');
+});
