@@ -37,6 +37,7 @@
 			#typing-container {
 				height: 15px;
 			}
+
 			#typing {
 				font-size: 1em;
 				color: #999;
@@ -85,8 +86,10 @@
 			const sinceLastTyped = (millisec) => {
 				if ((end - start) <= millisec) 
 					stoppedTyping = false;
-				else
+				else {
 					stoppedTyping = true;
+					end = Date.now();
+				}
 				start = end;
 				return stoppedTyping;
 			}
@@ -127,9 +130,7 @@
 
 			const messageField = document.querySelector('#message');
 			messageField.addEventListener('keypress', e => {
-				end = Date.now();
-				if(sinceLastTyped(1000));
-					socket.emit('typing', pseudo);
+				socket.emit('typing', pseudo);
 			});
 
 			socket.on('welcome', ({pseudo, online, names}) => {

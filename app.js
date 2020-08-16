@@ -6,9 +6,12 @@ const encode = require('ent/encode');
 
 app.set('view engine', 'ejs');
 
-app.get(/\w*/, (req, res) => {
+app.get('/', (req, res) => {
 	res.render('index.ejs');
 })
+.get('*', (req, res, next) => {
+	res.redirect('/');
+});
 
 const clients = [];
 const typing = [];
@@ -21,7 +24,6 @@ io.sockets.on('connection', socket => {
 		let names = clients.map(client => client.pseudo);
 		socket.emit('welcome', {pseudo: pseudo, online: clients.length, names: names});
 		socket.broadcast.emit('enters_chat', {pseudo: pseudo, online: clients.length, names: names});
-		console.log(pseudo);
 	});
 
 	socket.on('message', message => {
@@ -42,7 +44,6 @@ io.sockets.on('connection', socket => {
 		let index = typing.findIndex(({name, time}) => pseudo === name);
 		if(~index) {
 			typing[index] = {name: pseudo, time: Date.now()}
-			console.log('tilde index: ' + index)
 		}
 		else
 			typing.push({name: pseudo, time: Date.now()});
