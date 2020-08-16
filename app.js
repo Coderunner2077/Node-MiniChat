@@ -11,12 +11,13 @@ app.get(/\w*/, (req, res) => {
 })
 
 const clients = [];
+const typing = [];
 
 io.sockets.on('connection', socket => {
 	clients.push(socket);
 
 	socket.on('pseudo_entry', pseudo => {
-		socket.pseudo = pseudo = encode(pseudo);
+		socket.pseudo = pseudo = encode(pseudo ? pseudo : '');
 		let names = clients.map(client => client.pseudo);
 		socket.emit('welcome', {pseudo: pseudo, online: clients.length, names: names});
 		socket.broadcast.emit('enters_chat', {pseudo: pseudo, online: clients.length, names: names});
@@ -35,6 +36,37 @@ io.sockets.on('connection', socket => {
 		socket.broadcast.emit('leaves_chat', {
 			pseudo: socket.pseudo, online: clients.length, names: names
 		})
+	});
+
+	socket.on('typing', (pseudo) => {
+		let index = typing.findIndex(({name, time}) => pseudo === name);
+		if(~index) {
+			typing[index] = {name: pseudo, time: Date.now()}
+			console.log('tilde index: ' + index)
+		}
+		else
+			typing.push({name: pseudo, time: Date.now()});
+			
+		let names = typing.map(({name, time}) => name)
+		
+		socket.emit('typing', names);
+		socket.broadcast.emit('typing', names);
+		setTimeout(() => {
+			let stoppedTyping = [];
+			typing.forEach(({name, time}) => {
+				if((Date.now() - time) >= 2000)
+					stoppedTyping.push({name: name, time: time});
+			});
+
+			if(stoppedTyping.length > 0) {
+				stoppedTyping.forEach(nameTime => {
+					typing.splice(typing.indexOf(nameTime), 1);
+				});
+				let names = typing.map(({name, time}) => name)
+				socket.emit('typing', names);
+				socket.broadcast.emit('typing', names);
+			} 
+		}, 2500);
 	});
 })
 

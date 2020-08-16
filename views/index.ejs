@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<title>Superchat</title>
+		<style>
+			#message {
+				margin-right: 10px;
+			}
+
+			.chat {
+				font-size: 1.2em;
+				margin: 13px 10px;
+			}
+
+			.pseudo {
+				background-color: black;
+				color: white;
+				padding: 5px 8px;
+				margin-right: 6px;
+				font-weight: bold;
+
+			}
+
+			.log {
+				font-style: italic;
+				margin: 10px 20px;
+			}
+
+			#online {
+				font-size: 1.2em;
+				background-color: #ccc;
+				padding: 5px;
+				margin: 5px 0px;
+			}
+
+			#typing-container {
+				height: 15px;
+			}
+			#typing {
+				font-size: 1em;
+				color: #999;
+				display: block;
+			}
+			
+			#typing.hidden {
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Le super Chat temps réel !</h1>
+		<div id="online">
+			<div id="total"></div>
+			<div id="names"></div>
+		</div>
+		<form id="myForm">
+			<input type="text" id="message" name="message" placeholder="Votre message" 
+				value="" />
+			<input type="submit" value="Envoyer" />
+		</form>
+		<div id="typing-container"><div id="typing"></div></div>
+		<div id="chat"></div>
+			
+		</div>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			const writeChat = (pseudo, message) => {
+				let div = document.getElementById('chat');
+				div.innerHTML += `<p class="chat"><span class="pseudo">
+					${pseudo}</span>${message}</p>`;
+			}
+
+			const writeLog = (message) => {
+				document.querySelector('#chat').innerHTML += `<p class="log">
+					${message}</p>`;
+			}
+
+			const updateOnline = (online, names) => {
+				document.querySelector('#total').innerHTML = 'Online: ' + online;
+				document.querySelector('#names').innerHTML = names.join(', ');
+			}
+			
+			var start = 0, end = Date.now(), stoppedTyping = true;
+			const sinceLastTyped = (millisec) => {
+				if ((end - start) <= millisec) 
+					stoppedTyping = false;
+				else
+					stoppedTyping = true;
+				start = end;
+				return stoppedTyping;
+			}
+
+			const updateTyping = (names) => {
+				let noms = [];
+				names.forEach(name => { if(name !== pseudo) noms.push(name); });
+				if(noms.length === 0)
+					return hasStoppedTyping();
+				noms = noms.length > 1 ? noms.join(', ') + ' are' : noms[0] + ' is';
+				let typing = document.querySelector('#typing')
+				typing.innerHTML = noms + ' typing...';
+				typing.classList.remove('hidden');
+			}
+
+			const hasStoppedTyping = () => {
+				let typing = document.querySelector('#typing')
+				typing.classList.add('hidden');		
+				return false				
+			}
+
+			const socket = io.connect('http://localhost:8080');
+
+			var pseudo = '';
+			setTimeout(() => {
+				pseudo = prompt('Entrez votre pseudo');
+				socket.emit('pseudo_entry', pseudo);
+			}, 500);
+
+			const myForm = document.querySelector('#myForm');
+			myForm.addEventListener('submit', e => {
+				e.preventDefault();
+				let message = document.querySelector('#message');
+				if(message.value === '' || pseudo === '') return;
+				socket.emit('message', message.value);
+				message.value = '';
+			})
+
+			const messageField = document.querySelector('#message');
+			messageField.addEventListener('keypress', e => {
+				end = Date.now();
+				if(sinceLastTyped(1000));
+					socket.emit('typing', pseudo);
+			});
+
+			socket.on('welcome', ({pseudo, online, names}) => {
+				updateOnline(online, names);
+				writeLog('Bienvenue ' + pseudo + ' !');
+			})
+
+			socket.on('enters_chat', ({pseudo, online, names}) => {
+				updateOnline(online, names);
+				writeLog(pseudo + ' a rejoint le Chat !');
+			});
+
+			socket.on('message', ({message, pseudo}) => {
+				writeChat(pseudo, message);
+			});
+			
+			socket.on('typing', (names) => {
+				if(names.length > 0)
+					updateTyping(names);
+				else
+					hasStoppedTyping();
+			});
+
+
+			socket.on('leaves_chat', ({pseudo, online, names}) => {
+				updateOnline(online, names);
+				writeLog(pseudo + ' a quitté le Chat !')
+			});
+		</script>
+	</body>
+</html>
