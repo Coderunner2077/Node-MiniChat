@@ -16,6 +16,31 @@ app.get('/', (req, res) => {
 const clients = [];
 const typing = [];
 
+const manageIfStoppedTyping = (typing, socket, pseudo) => {
+	let stoppedTyping = [];
+	if(pseudo !== undefined) {
+		typing.forEach(({name, time}) => {
+			if(pseudo == name)
+				stoppedTyping.push({name: name, time: time});
+		});
+		console.log('yeah :' + stoppedTyping)
+	}
+		
+	typing.forEach(({name, time}) => {
+		if((Date.now() - time) >= 2000)
+			stoppedTyping.push({name: name, time: time});
+	});
+
+	if(stoppedTyping.length > 0) {
+		stoppedTyping.forEach(nameTime => {
+			typing.splice(typing.indexOf(nameTime), 1);
+		});
+		let names = typing.map(({name, time}) => name)
+		socket.emit('typing', names);
+		socket.broadcast.emit('typing', names);
+	} 
+}
+
 io.sockets.on('connection', socket => {
 	clients.push(socket);
 
@@ -30,6 +55,7 @@ io.sockets.on('connection', socket => {
 		message = encode(message);
 		socket.emit('message', {message: message, pseudo: socket.pseudo});
 		socket.broadcast.emit('message', {message: message, pseudo: socket.pseudo});
+		manageIfStoppedTyping(typing, socket, socket.pseudo)
 	});
 
 	socket.on('disconnect', () => {
@@ -50,23 +76,9 @@ io.sockets.on('connection', socket => {
 			
 		let names = typing.map(({name, time}) => name)
 		
-		socket.emit('typing', names);
 		socket.broadcast.emit('typing', names);
 		setTimeout(() => {
-			let stoppedTyping = [];
-			typing.forEach(({name, time}) => {
-				if((Date.now() - time) >= 2000)
-					stoppedTyping.push({name: name, time: time});
-			});
-
-			if(stoppedTyping.length > 0) {
-				stoppedTyping.forEach(nameTime => {
-					typing.splice(typing.indexOf(nameTime), 1);
-				});
-				let names = typing.map(({name, time}) => name)
-				socket.emit('typing', names);
-				socket.broadcast.emit('typing', names);
-			} 
+			manageIfStoppedTyping(typing, socket);
 		}, 2500);
 	});
 })

@@ -47,6 +47,13 @@
 			#typing.hidden {
 				display: none;
 			}
+
+			#chatRoom {
+				height: 350px;
+				background-color: #eee;
+				overflow-y: scroll;
+
+			}
 		</style>
 	</head>
 	<body>
@@ -61,20 +68,23 @@
 			<input type="submit" value="Envoyer" />
 		</form>
 		<div id="typing-container"><div id="typing"></div></div>
-		<div id="chat"></div>
+		<div id="chatRoom"></div>
 			
 		</div>
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
 			const writeChat = (pseudo, message) => {
-				let div = document.getElementById('chat');
+				let div = document.getElementById('chatRoom');
 				div.innerHTML += `<p class="chat"><span class="pseudo">
 					${pseudo}</span>${message}</p>`;
+				div.scrollTop = div.scrollHeight;
 			}
 
 			const writeLog = (message) => {
-				document.querySelector('#chat').innerHTML += `<p class="log">
+				let div = document.querySelector('#chatRoom');
+				div.innerHTML += `<p class="log">
 					${message}</p>`;
+				div.scrollTop = div.scrollHeight;
 			}
 
 			const updateOnline = (online, names) => {
