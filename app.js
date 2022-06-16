@@ -23,7 +23,6 @@ const manageIfStoppedTyping = (typing, socket, pseudo) => {
 			if(pseudo == name)
 				stoppedTyping.push({name: name, time: time});
 		});
-		console.log('yeah :' + stoppedTyping)
 	}
 		
 	typing.forEach(({name, time}) => {

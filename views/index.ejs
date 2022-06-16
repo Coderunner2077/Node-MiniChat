@@ -52,7 +52,6 @@
 				height: 350px;
 				background-color: #eee;
 				overflow-y: scroll;
-
 			}
 		</style>
 	</head>
@@ -90,18 +89,6 @@
 			const updateOnline = (online, names) => {
 				document.querySelector('#total').innerHTML = 'Online: ' + online;
 				document.querySelector('#names').innerHTML = names.join(', ');
-			}
-			
-			var start = 0, end = Date.now(), stoppedTyping = true;
-			const sinceLastTyped = (millisec) => {
-				if ((end - start) <= millisec) 
-					stoppedTyping = false;
-				else {
-					stoppedTyping = true;
-					end = Date.now();
-				}
-				start = end;
-				return stoppedTyping;
 			}
 
 			const updateTyping = (names) => {
