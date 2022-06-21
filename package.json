@@ -7,6 +7,6 @@
 		"express": "~4.17.1",
 		"socket.io": "~2.3.0"
 	},
-	"author": "Tyran Reacts s.mossa1990@gmail.com",
+	"author": "Guillaume Coderunner <coderunner2077@gmail.com>",
 	"description": "Very basic chat using Node.js and socket.io"
 }
